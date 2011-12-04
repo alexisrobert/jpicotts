@@ -96,17 +96,18 @@ JNIEXPORT void JNICALL Java_org_alexis_jpicotts_PicoTTS_setup
 	}
 }
 
-JNIEXPORT void JNICALL Java_org_alexis_jpicotts_PicoTTS_say
+JNIEXPORT jbyteArray JNICALL Java_org_alexis_jpicotts_PicoTTS_say
   (JNIEnv *env, jobject parent, jstring text) {
 
-	FILE *output = fopen("output.raw", "w");
+	jbyte *output = NULL;
+	size_t output_length = 0;
 
-	const jchar *input = (*env)->GetStringUTFChars(env, text, NULL);
+	const char *input = (*env)->GetStringUTFChars(env, text, NULL);
 	int textRemaining = (*env)->GetStringLength(env, text)+1;
 
 	printf("string=%s,length=%d\n", input, textRemaining-1);
 	pico_Char *inp = (pico_Char*) input;
-	short *outBuffer = malloc(MAX_OUTBUF_SIZE/2);
+	jbyte *outBuffer = malloc(MAX_OUTBUF_SIZE/2);
 	pico_Status status;
 
 	pico_Int16 bytesSent, bytesReceived, outDataType;
@@ -122,12 +123,19 @@ JNIEXPORT void JNICALL Java_org_alexis_jpicotts_PicoTTS_say
 			if (bytesReceived) {
 				printf("receive %d bytes (type=%d)\n", bytesReceived, outDataType);
 				
-				size_t blah = (size_t)bytesReceived;
-				fwrite(outBuffer, blah, 1, output);
+				output = realloc(output, (output_length+((size_t)bytesReceived))*sizeof(short));
+				memcpy((jbyte*)(output+output_length), outBuffer, bytesReceived);
+				output_length = output_length+bytesReceived;
 			}
 		} while (PICO_STEP_BUSY == status);
-	}
+	}	
 
-	fclose(output);
-	(*env)->ReleaseStringChars(env, text, input);
+	jbyteArray jni_output = (*env)->NewByteArray(env, output_length);
+	(*env)->SetByteArrayRegion(env, jni_output, 0, output_length, output);
+
+	free(output);
+	free(outBuffer);
+	(*env)->ReleaseStringUTFChars(env, text, input);
+
+	return jni_output;
 }
