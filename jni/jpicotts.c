@@ -132,7 +132,15 @@ JNIEXPORT jbyteArray JNICALL Java_org_alexis_jpicotts_PicoTTS_say
 
 	while(textRemaining) {
 		status = pico_putTextUtf8(picoEngine, inp, textRemaining, &bytesSent);
+
 		textRemaining -= bytesSent;
+
+		if (PICO_OK != status) {
+			raise_exception(env, "PicoTTS had trouble analyzing your text");
+			textRemaining = 0;
+			continue;
+		}
+
 		inp += bytesSent;
 
 		do {
