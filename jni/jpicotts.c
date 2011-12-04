@@ -10,46 +10,50 @@
 #define MAX_OUTBUF_SIZE 128
 #define PICO_VOICE_NAME "PicoVoice"
 
-#define TA_FILENAME "fr-FR_ta.bin"
-#define SG_FILENAME "fr-FR_nk0_sg.bin"
+#define PICOTTS_EXCEPTION_CLASS "org/alexis/jpicotts/PicoTTSException"
 
 pico_System     picoSystem          = NULL;
 pico_Char *     picoTaResourceName  = NULL;
 pico_Char *		picoSgResourceName	= NULL;
 pico_Engine     picoEngine          = NULL;
 
-int load_data() {
+void raise_exception(JNIEnv *env, const char* text) {
+	jclass exception = (*env)->FindClass(env, PICOTTS_EXCEPTION_CLASS);
+	(*env)->ThrowNew(env, exception, text);
+}
+
+int load_data(JNIEnv *env, const char* ta_filename, const char* sg_filename) {
 	pico_Resource   picoTaResource      = NULL;	
 	pico_Resource   picoSgResource      = NULL;	
 
 	picoTaResourceName  = (pico_Char *) malloc( PICO_MAX_RESOURCE_NAME_SIZE );
 	picoSgResourceName  = (pico_Char *) malloc( PICO_MAX_RESOURCE_NAME_SIZE );
 
-	pico_Status status = pico_loadResource(picoSystem, TA_FILENAME, &picoTaResource);
+	pico_Status status = pico_loadResource(picoSystem, ta_filename, &picoTaResource);
 
 	if (PICO_OK != status) {
-		fprintf(stderr, "Failed to load text analysis data\n");
+		raise_exception(env, "Failed to load text analysis data");
 		return 1;
 	}
 
-	status = pico_loadResource(picoSystem, SG_FILENAME, &picoSgResource);
+	status = pico_loadResource(picoSystem, sg_filename, &picoSgResource);
 
 	if (PICO_OK != status) {
-		fprintf(stderr, "Failed to load sound generation data\n");
+		raise_exception(env, "Failed to load sound generation data");
 		return 1;
 	}
 
 	status = pico_getResourceName(picoSystem, picoTaResource, (char*)picoTaResourceName);
 
 	if (PICO_OK != status) {
-		fprintf(stderr, "Failed to get resource name for text analysis data\n");
+		raise_exception(env, "Failed to get resource name for text analysis data");
 		return 1;
 	}
 
 	status = pico_getResourceName(picoSystem, picoSgResource, (char*)picoSgResourceName);
 
 	if (PICO_OK != status) {
-		fprintf(stderr, "Failed to get resource name for sound generation data\n");
+		raise_exception(env, "Failed to get resource name for sound generation data");
 		return 1;
 	}
 
@@ -57,13 +61,13 @@ int load_data() {
 }
 
 JNIEXPORT void JNICALL Java_org_alexis_jpicotts_PicoTTS_setup
-  (JNIEnv *env, jobject parent) {
+  (JNIEnv *env, jobject parent, jstring ta_filename, jstring sg_filename) {
 	// INIT
 	void *memory = malloc(PICO_MEM_SIZE);
 
 	pico_Status status = pico_initialize(memory, PICO_MEM_SIZE, &picoSystem);
 	if (PICO_OK != status) {
-		fprintf(stderr, "Failed to initialize Pico system\n");
+		raise_exception(env, "Failed to initialize Pico system");
 		return;
 	}
 
@@ -71,27 +75,41 @@ JNIEXPORT void JNICALL Java_org_alexis_jpicotts_PicoTTS_setup
 	status = pico_createVoiceDefinition(picoSystem, voicename);
 
 	if (PICO_OK != status) {
-		fprintf(stderr, "Failed creating voice definition\n");
+		raise_exception(env, "Failed creating voice definition");
 		return;
 	}
 
 	// Load resource data
-	if (load_data() != 0)
+	const char* ta_filename_native = (*env)->GetStringUTFChars(env, ta_filename, NULL);
+	const char* sg_filename_native = (*env)->GetStringUTFChars(env, sg_filename, NULL);
+	if (load_data(env, ta_filename_native, sg_filename_native) != 0)
 		return;
+	(*env)->ReleaseStringUTFChars(env, ta_filename, ta_filename_native);
+	(*env)->ReleaseStringUTFChars(env, sg_filename, sg_filename_native);
 
 	// Add the text analysis resource
 	status = pico_addResourceToVoiceDefinition(picoSystem, PICO_VOICE_NAME,
 		picoTaResourceName);	
 
+	if (PICO_OK != status) {
+		raise_exception(env, "Failed to add the text analysis resource");
+		return;
+	}
+
 	// Add the signal generation resource
 	status = pico_addResourceToVoiceDefinition(picoSystem, PICO_VOICE_NAME,
 		picoSgResourceName);		
+
+	if (PICO_OK != status) {
+		raise_exception(env, "Failed to add the signal generation resource");
+		return;
+	}
 
 	// Initialize the engine
 	status = pico_newEngine(picoSystem, voicename, &picoEngine);
 
 	if (PICO_OK != status) {
-		fprintf(stderr, "Failed to load the engine\n");
+		raise_exception(env, "Failed to load the engine");
 		return;
 	}
 }
