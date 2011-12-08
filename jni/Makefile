@@ -11,7 +11,7 @@ picotts: picottsroot_verify
 	cd picotts_out && make 
 	
 jpicotts.so: picotts jpicotts.o picottsroot_verify
-	${LD} -o jpicotts.so -shared ${LDFLAGS} jpicotts.o picotts_out/*.o
+	${LD} -o libjpicotts.so -shared ${LDFLAGS} jpicotts.o picotts_out/*.o
 	
 jpicotts.o: jpicotts.c org_alexis_jpicotts_PicoTTS.h
 	${CC} -c ${CFLAGS} jpicotts.c
