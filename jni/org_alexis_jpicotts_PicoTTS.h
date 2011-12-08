@@ -17,10 +17,10 @@ JNIEXPORT void JNICALL Java_org_alexis_jpicotts_PicoTTS_setup
 
 /*
  * Class:     org_alexis_jpicotts_PicoTTS
- * Method:    say
+ * Method:    say_raw
  * Signature: (Ljava/lang/String;)[B
  */
-JNIEXPORT jbyteArray JNICALL Java_org_alexis_jpicotts_PicoTTS_say
+JNIEXPORT jbyteArray JNICALL Java_org_alexis_jpicotts_PicoTTS_say_1raw
   (JNIEnv *, jobject, jstring);
 
 #ifdef __cplusplus

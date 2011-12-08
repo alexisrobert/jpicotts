@@ -114,7 +114,7 @@ JNIEXPORT void JNICALL Java_org_alexis_jpicotts_PicoTTS_setup
 	}
 }
 
-JNIEXPORT jbyteArray JNICALL Java_org_alexis_jpicotts_PicoTTS_say
+JNIEXPORT jbyteArray JNICALL Java_org_alexis_jpicotts_PicoTTS_say_1raw
   (JNIEnv *env, jobject parent, jstring text) {
 
 	jbyte *output = NULL;

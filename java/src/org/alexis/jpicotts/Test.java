@@ -7,7 +7,7 @@ public class Test {
 		try {
 			PicoTTS pico = new PicoTTS("/home/alexis/picotts/fr-FR_ta.bin", "/home/alexis/picotts/fr-FR_nk0_sg.bin");
 			
-			pico.say_audio("J'ai pas une voix horrible !");
+			pico.say("Je suis une synthese vocale trop top !");
 		} catch (PicoTTSException e1) {
 			// TODO Auto-generated catch block
 			e1.printStackTrace();

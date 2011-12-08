@@ -8,14 +8,14 @@ import javax.sound.sampled.SourceDataLine;
 
 public class PicoTTS {
 	public PicoTTS(String ta_filename, String sg_filename) throws PicoTTSException {
-		System.loadLibrary("jpico");
+		System.loadLibrary("jpicotts");
 		this.setup(ta_filename, sg_filename);
 	}
 
 	private native void setup(String ta_filename, String sg_filename) throws PicoTTSException;
-	public native byte[] say(String text) throws PicoTTSException;
+	public native byte[] say_raw(String text) throws PicoTTSException;
 
-	public void say_audio(String text) throws PicoTTSException, LineUnavailableException {
+	public void say(String text) throws PicoTTSException, LineUnavailableException {
 		AudioFormat format = new AudioFormat(16000, 16, 1, true, false);
 		DataLine.Info info = new DataLine.Info(SourceDataLine.class, format);
 		if (!AudioSystem.isLineSupported(info)) {
@@ -27,7 +27,7 @@ public class PicoTTS {
 		line.open(format);
 		line.start();
 
-		byte[] data = this.say(text);
+		byte[] data = this.say_raw(text);
 		line.write(data, 0, data.length);
 
 		line.stop();
