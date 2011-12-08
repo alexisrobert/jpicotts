@@ -8,19 +8,19 @@ LDFLAGS=-Wall
 world: jpicotts.so
 
 picotts: picottsroot_verify 
-	cd picotts_out && make 
+	+cd picotts_out && make $(MFLAGS)
 	
-jpicotts.so: picotts jpicotts.o picottsroot_verify
+jpicotts.so: picotts jpicotts.o 
 	${LD} -o libjpicotts.so -shared ${LDFLAGS} jpicotts.o picotts_out/*.o
 	
-jpicotts.o: jpicotts.c org_alexis_jpicotts_PicoTTS.h
+jpicotts.o: jpicotts.c org_alexis_jpicotts_PicoTTS.h picottsroot_verify
 	${CC} -c ${CFLAGS} jpicotts.c
 
 .PHONY: clean picottsroot_verify
 
 clean:
 	rm -f -- *.o
-	rm -f libjpico.so
+	rm -f libjpicotts.so
 	cd picotts_out && make clean
 
 picottsroot_verify:
